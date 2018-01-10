@@ -6,7 +6,7 @@ endif()
 set(pm_utils_included 1)
 
 
-#----------------------------- pm_print, pm_print_verbose, pm_error, pm_assert -----------------------------
+#----------------------------- pm_print, pm_print_verbose, pm_error, pm_assert_strequal -----------------------------
 function(pm_print msg)
     message(STATUS "${msg}")
 endfunction()
@@ -18,12 +18,18 @@ function(pm_print_verbose msg)
 endfunction()
 
 function(pm_error msg)
-    message(FATAL_ERROR "${msg}")
+    message(FATAL_ERROR "########## ${msg} ##########")
+endfunction()
+
+function(pm_assert cond msg)
+    if(NOT "${cond}")
+        pm_error("pm_assert: ${msg}")
+    endif()
 endfunction()
 
 function(pm_assert_strequal a b)
     if(NOT "${a}" STREQUAL "${b}")
-        pm_error(msg "${a} != ${b}")
+        pm_error("pm_assert_strequal: ${a} != ${b}")
     endif()
 endfunction()
 
@@ -39,84 +45,47 @@ function(pm_print_list list_name lst)
 endfunction()
 
 
-#----------------------------- pm_absolute_paths -----------------------------
-function(pm_absolute_paths out_list root_dir in_list)
-    set(lst)
-    foreach(item ${in_list})
-        list(APPEND lst "${root_dir}/${item}")
-    endforeach()
-    set("${out_list}" "${lst}" PARENT_SCOPE)
-endfunction()
-
-
-#----------------------------- pm_groups -----------------------------
-function(pm_groups abs_root rel_paths root_sourcegroup)
+#----------------------------- pm_get_abs_paths -----------------------------
+function(pm_get_abs_paths out_abs_paths abs_dir rel_paths)
+    set(abs_paths)
     foreach(rel_path ${rel_paths})
-        string(REPLACE "/" ";" tokens "${rel_path}")
-        list(REMOVE_AT tokens -1)
+        list(APPEND abs_paths "${abs_dir}/${rel_path}")
+    endforeach()
+    set("${out_abs_paths}" "${abs_paths}" PARENT_SCOPE)
+endfunction()
+
+
+#----------------------------- pm_set_ide_sourcegroups -----------------------------
+# pm_set_sourcegroups("C:/root" "dir1/a.cpp;dir2/b.cpp" "group/subgroup") will create in visual studio source explorer:
+# +-group
+#   +-subgroup
+#     +-dir1
+#        +-a.cpp (C:/root/dir1/a.cpp)
+#     +-dir2
+#        +-b.cpp (C:/root/dir2/b.cpp)
+function(pm_set_ide_sourcegroups abs_dir rel_paths root_sourcegroup)
+    foreach(rel_path ${rel_paths})
+        set(group "${rel_path}")                         # "a/b/file.cpp"
         if(NOT "${root_sourcegroup}" STREQUAL "")
-            list(INSERT tokens 0 "${root_sourcegroup}")
+            set(group "${root_sourcegroup}/${rel_path}")       # "group/subgroup/a/b/file.cpp"
         endif()
-        string(REPLACE ";" "\\" sourcegroup "${tokens}")
-        source_group("${sourcegroup}" FILES "${abs_root}/${rel_path}")
-        #pm_print("source_group(${sourcegroup} FILES ${abs_root}/${rel_path})")
+        string(REPLACE "/" ";" tokens "${group}")        # "group;subgroup;a;b;file.cpp"
+        list(REMOVE_AT tokens -1)                        # "group;subgroup;a;b"
+        string(REPLACE ";" "\\" sourcegroup "${tokens}") # "group\\subgroup\\a\\b"
+        if(NOT "${sourcegroup}" STREQUAL "")
+            # we create one source group per file, it's brute force but it works
+            source_group("${sourcegroup}" FILES "${abs_dir}/${rel_path}")
+        endif()
     endforeach()
 endfunction()
 
-
-#----------------------------- pm_setcpp11_per_file -----------------------------
-# on Android, set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11") does not work with .c files.
-# android_native_app_glue.c is added automatically by cmake for executables.
-# The workaround is to set "-std=c++11" for each file
-# From cmake doc: Source file properties are visible only to targets added in the same directory (CMakeLists.txt).
-function(pm_setcpp11_per_file files)
-    if(pm_platform_is_android)
-        foreach(file ${files})
-            get_filename_component(extension "${file}" EXT)
-            if("${extension}" STREQUAL ".cpp")
-                set_source_files_properties("${file}" PROPERTIES COMPILE_FLAGS "-std=c++11")
-            endif()
-        endforeach()
-    endif()
-endfunction()
-
-#----------------------------- pm_glob_filter -----------------------------
-# requires pm_source_extensions to be set
-function(pm_glob_filter out_filter dir)
-    set(filter)
-    foreach(extension ${pm_source_extensions})
-        list(APPEND filter "${dir}/*${extension}")
-    endforeach()
-    #pm_print("filter=${filter}")
-    set("${out_filter}" "${filter}" PARENT_SCOPE)
-endfunction()
 
 #----------------------------- pm_sources -----------------------------
-# GLOB RECURSE in root_dir using and create source_groups
-function(pm_sources out_absolute_files root_dir root_sourcegroup)
-    pm_glob_filter(filter "${root_dir}")
-    file(GLOB_RECURSE relative_files RELATIVE "${root_dir}" ${filter})
-    pm_groups("${root_dir}" "${relative_files}" "${root_sourcegroup}")
-    pm_absolute_paths(absolute_files "${root_dir}" "${relative_files}")
-    pm_setcpp11_per_file("${absolute_files}")
-    set("${out_absolute_files}" "${absolute_files}" PARENT_SCOPE)
-endfunction()
-
-#----------------------------- pm_sources_flat -----------------------------
-# GLOB in root_dir using ${pm_source_extensions} and create source_groups
-function(pm_sources_flat out_absolute_files root_dir root_sourcegroup)
-    pm_glob_filter(filter "${root_dir}")
-    file(GLOB relative_files RELATIVE "${root_dir}" ${filter})
-    pm_groups("${root_dir}" "${relative_files}" "${root_sourcegroup}")
-    pm_absolute_paths(absolute_files "${root_dir}" "${relative_files}")
-    pm_setcpp11_per_file("${absolute_files}")
-    set("${out_absolute_files}" "${absolute_files}" PARENT_SCOPE)
-endfunction()
-
-#----------------------------- pm_sources_onefile -----------------------------
-function(pm_sources_onefile out_absolute_files one_file_abspath root_sourcegroup)
-    source_group("${root_sourcegroup}" FILES "${one_file_abspath}")
-    pm_setcpp11_per_file("${one_file_abspath}")
-    set("${out_absolute_files}" "${one_file_abspath}" PARENT_SCOPE)
+# return all files in abs_dir (and set a sourcegroup for each)
+function(pm_get_sources out_abs_paths abs_dir root_sourcegroup)
+    file(GLOB_RECURSE rel_paths RELATIVE "${abs_dir}" "${abs_dir}/*")
+    pm_set_ide_sourcegroups("${abs_dir}" "${rel_paths}" "${root_sourcegroup}")
+    pm_get_abs_paths(abs_paths "${abs_dir}" "${rel_paths}")
+    set("${out_abs_paths}" "${abs_paths}" PARENT_SCOPE)
 endfunction()
 
