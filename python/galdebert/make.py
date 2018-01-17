@@ -89,7 +89,7 @@ class Build:
             print(f'cmake_generate_dir = "{self.generate_dir}"')
             cmd = ['cmake', '-G', self.generator, '-D', f'PM_BUILD={self.complete_build_str}', '-D', f'PM_ROOT={self.root_absdir}']
             if self.verbose:
-                cmd.extend(['-D', 'PM_VERBOSE=1'])
+                cmd.extend(['-D', 'BELIT_VERBOSE=1'])
             cmd.append(self.root_absdir) # source_dir must be the last arg
 
             print(' '.join(cmd))
