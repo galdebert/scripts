@@ -73,23 +73,6 @@ if __name__ == '__main__':
     sys.exit(rc)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def run(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("rootdir", nargs="*")

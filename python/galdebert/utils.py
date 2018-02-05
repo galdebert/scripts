@@ -61,7 +61,7 @@ def help_str(choices: List[str], default: str=None) -> str:
     default_str = f' default={default}' if default is not None else ''
     return f'[{", ".join(choices)}]{default_str}'
 
-
+#usage: with utils.chg_cwd('my/dir'):
 @contextmanager
 def chg_cwd(path: str):
     old_cwd = os.getcwd()
