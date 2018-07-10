@@ -23,6 +23,10 @@ def containing_dir(path: str) -> str:
     return norm_path(os.path.dirname(os.path.abspath(path)))
 
 
+def make_containing_dir(path: str):
+    os.makedirs(containing_dir(path), exist_ok=True)
+
+
 def glob_abs(glob_expr: str) -> str:
     for p in glob.iglob(glob_expr, recursive='**' in glob_expr):
         yield norm_path(p)

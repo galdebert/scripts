@@ -6,6 +6,7 @@ import subprocess
 from typing import List
 import argparse
 import shutil
+import fnmatch
 from . import utils
 
 
@@ -81,7 +82,7 @@ def run(args):
     parsed_args = parser.parse_args(args)
 
     def find_files(directory, pattern):
-        for root, dirs, files in os.walk(directory):
+        for root, _dirs, files in os.walk(directory):
             for basename in files:
                 if fnmatch.fnmatch(basename, pattern):
                     filename = os.path.join(root, basename)

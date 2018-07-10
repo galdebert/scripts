@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 
+# usage
+# when PYTHONPATH is empty, from D:\dev\galdebert\scripts\python:
+# py -3 -m galdebert.cmp_all_clang_format mydir
+
+# when PYTHONPATH contains D:\dev\galdebert\scripts\python, from anywhere:
+# py -3 -m galdebert.cmp_all_clang_format mydir
+
 import sys
 
-from . import araxis_cmp  # py scripts/cmp_all_clang_format.py
-# does when there is no __init__.py in the dir
-# py scripts/cmp_all_clang_format.py     KO
-# py cmp_all_clang_format.py             KO
+from . import araxis_cmp
+# does work when there is a __init__.py in the dir, otherwise the error is: Attempted relative import beyond top-level package
 
-#import araxis_cmp
-# does work when there is no __init__.py in the dir
-# py scripts/cmp_all_clang_format.py
-
-master = 
 paths = [r'C:\Dev\stingray\runtime\plugins\gwnav_plugin\_clang-format',
          r'C:\Dev\stingray\runtime\_clang-format',
          r'C:\Dev\stingray-navigation-samples\nav_test_plugin\src\_clang-format',

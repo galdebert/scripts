@@ -6,6 +6,11 @@ this will install:
 - autopep8>=1.3.2
 - pylint>=1.7.2
 
+# PYTHONPATH
+
+To be able to call scripts from anywhere, for ex `py -3 -m galdebert.cmp_all_clang_format mydir`, 
+then you should add `D:\dev\galdebert\scripts\python` to your `PYTHONPATH`.
+
 # vscode integration of pylint and autopep8
 
 the workspace settings I use is:

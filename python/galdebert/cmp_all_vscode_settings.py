@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.6
 
 import sys
-import araxis_cmp
+from . import araxis_cmp
 
 paths = [r'C:\Dev\navigation\.vscode\settings.json',
          r'C:\Dev\stingray-navigation-samples\.vscode\settings.json']
